@@ -123,6 +123,14 @@ export class CollapsibleContainerNode extends ElementNode {
   toggleOpen(): void {
     this.setOpen(!this.getOpen());
   }
+
+  isInline(): boolean {
+    return false;
+  }
+
+  canBeEmpty(): boolean {
+    return false;
+  }
 }
 
 export function $createCollapsibleContainerNode(

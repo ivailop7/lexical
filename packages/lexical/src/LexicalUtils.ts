@@ -1418,8 +1418,15 @@ function createBlockCursorElement(editorConfig: EditorConfig): HTMLDivElement {
 }
 
 function needsBlockCursor(node: null | LexicalNode): boolean {
+  if (node) {
+    // console.log($isElementNode(node), !node.canBeEmpty(), ($isElementNode(node) && !node.canBeEmpty()));
+    // console.log(($isElementNode(node) && node.getType() === 'collapsible-container'));
+    // console.log(!node.isInline());
+  }
   return (
-    ($isDecoratorNode(node) || ($isElementNode(node) && !node.canBeEmpty())) &&
+    ($isDecoratorNode(node) ||
+      ($isElementNode(node) && !node.canBeEmpty()) ||
+      (node !== null && node.getType() === 'collapsible-container')) &&
     !node.isInline()
   );
 }
@@ -1454,10 +1461,14 @@ export function updateDOMBlockCursorElement(
     const elementNode = anchor.getNode();
     const offset = anchor.offset;
     const elementNodeSize = elementNode.getChildrenSize();
+    // console.log('offset', offset);
+    // console.log('elementNode', elementNode);
     let isBlockCursor = false;
     let insertBeforeElement: null | HTMLElement = null;
 
-    if (offset === elementNodeSize) {
+    if (elementNode.getType() === 'collapsible-title') {
+      isBlockCursor = true;
+    } else if (offset === elementNodeSize) {
       const child = elementNode.getChildAtIndex(offset - 1);
       if (needsBlockCursor(child)) {
         isBlockCursor = true;
@@ -1475,20 +1486,46 @@ export function updateDOMBlockCursorElement(
       }
     }
     if (isBlockCursor) {
-      const elementDOM = editor.getElementByKey(
-        elementNode.__key,
-      ) as HTMLElement;
-      if (blockCursorElement === null) {
-        editor._blockCursorElement = blockCursorElement =
-          createBlockCursorElement(editor._config);
-      }
-      rootElement.style.caretColor = 'transparent';
-      if (insertBeforeElement === null) {
-        elementDOM.appendChild(blockCursorElement);
+      if (elementNode.getType() === 'collapsible-container') {
+        const parentNode = elementNode.getParent();
+        // console.log('parent', parentNode);
+        if (parentNode) {
+          const elementDOM = editor.getElementByKey(
+            parentNode.__key,
+          ) as HTMLElement;
+          if (blockCursorElement === null) {
+            // console.log("zzz111");
+            editor._blockCursorElement = blockCursorElement =
+              createBlockCursorElement(editor._config);
+          }
+          rootElement.style.caretColor = 'transparent';
+          // console.log("zzz222");
+          if (insertBeforeElement === null) {
+            elementDOM.appendChild(blockCursorElement);
+            // console.log("zzz33");
+          } else {
+            elementDOM.insertBefore(blockCursorElement, insertBeforeElement);
+            // console.log("zzz44");
+          }
+          // console.log("zzz55");
+          return;
+        }
       } else {
-        elementDOM.insertBefore(blockCursorElement, insertBeforeElement);
+        const elementDOM = editor.getElementByKey(
+          elementNode.__key,
+        ) as HTMLElement;
+        if (blockCursorElement === null) {
+          editor._blockCursorElement = blockCursorElement =
+            createBlockCursorElement(editor._config);
+        }
+        rootElement.style.caretColor = 'transparent';
+        if (insertBeforeElement === null) {
+          elementDOM.appendChild(blockCursorElement);
+        } else {
+          elementDOM.insertBefore(blockCursorElement, insertBeforeElement);
+        }
+        return;
       }
-      return;
     }
   }
   // Remove cursor

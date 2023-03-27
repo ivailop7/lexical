@@ -90,6 +90,14 @@ export class CollapsibleContentNode extends ElementNode {
       version: 1,
     };
   }
+
+  isInline(): boolean {
+    return false;
+  }
+
+  canBeEmpty(): boolean {
+    return false;
+  }
 }
 
 export function $createCollapsibleContentNode(): CollapsibleContentNode {

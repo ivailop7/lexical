@@ -126,6 +126,14 @@ export class CollapsibleTitleNode extends ElementNode {
       return paragraph;
     }
   }
+
+  isInline(): boolean {
+    return false;
+  }
+
+  canBeEmpty(): boolean {
+    return false;
+  }
 }
 
 export function $createCollapsibleTitleNode(): CollapsibleTitleNode {
