@@ -9,6 +9,7 @@
 import './ExcalidrawModal.css';
 
 import {Excalidraw} from '@excalidraw/excalidraw';
+import {BinaryFiles} from '@excalidraw/excalidraw/types/types';
 import * as React from 'react';
 import {ReactPortal, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
@@ -27,6 +28,10 @@ type Props = {
    */
   initialElements: ReadonlyArray<ExcalidrawElementFragment>;
   /**
+   * The initial set of elements to draw into the scene
+   */
+  initialFiles: BinaryFiles;
+  /**
    * Controls the visibility of the modal
    */
   isShown?: boolean;
@@ -41,7 +46,10 @@ type Props = {
   /**
    * Callback when the save button is clicked
    */
-  onSave: (elements: ReadonlyArray<ExcalidrawElementFragment>) => void;
+  onSave: (
+    elements: ReadonlyArray<ExcalidrawElementFragment>,
+    files: BinaryFiles,
+  ) => void;
 };
 
 /**
@@ -53,6 +61,7 @@ export default function ExcalidrawModal({
   closeOnClickOutside = false,
   onSave,
   initialElements,
+  initialFiles,
   isShown = false,
   onDelete,
   onClose,
@@ -62,6 +71,7 @@ export default function ExcalidrawModal({
   const [discardModalOpen, setDiscardModalOpen] = useState(false);
   const [elements, setElements] =
     useState<ReadonlyArray<ExcalidrawElementFragment>>(initialElements);
+  const [files, setFiles] = useState<BinaryFiles>(initialFiles);
 
   useEffect(() => {
     if (excaliDrawModelRef.current !== null) {
@@ -115,11 +125,11 @@ export default function ExcalidrawModal({
         currentModalRef.removeEventListener('keydown', onKeyDown);
       }
     };
-  }, [elements, onDelete]);
+  }, [elements, files, onDelete]);
 
   const save = () => {
     if (elements.filter((el) => !el.isDeleted).length > 0) {
-      onSave(elements);
+      onSave(elements, files);
     } else {
       // delete node if the scene is clear
       onDelete();
@@ -168,8 +178,13 @@ export default function ExcalidrawModal({
     return null;
   }
 
-  const onChange = (els: ReadonlyArray<ExcalidrawElementFragment>) => {
+  const onChange = (
+    els: ReadonlyArray<ExcalidrawElementFragment>,
+    _,
+    fls: BinaryFiles,
+  ) => {
     setElements(els);
+    setFiles(fls);
   };
 
   // This is a hacky work-around for Excalidraw + Vite.
@@ -191,6 +206,7 @@ export default function ExcalidrawModal({
             initialData={{
               appState: {isLoading: false},
               elements: initialElements,
+              files: initialFiles,
             }}
           />
           <div className="ExcalidrawModal__actions">

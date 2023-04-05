@@ -11,7 +11,7 @@ import {
   ExcalidrawElement,
   NonDeleted,
 } from '@excalidraw/excalidraw/types/element/types';
-import {AppState} from '@excalidraw/excalidraw/types/types';
+import {AppState, BinaryFiles} from '@excalidraw/excalidraw/types/types';
 import * as React from 'react';
 import {useEffect, useState} from 'react';
 
@@ -30,6 +30,10 @@ type Props = {
    * The Excalidraw elements to be rendered as an image
    */
   elements: NonDeleted<ExcalidrawElement>[];
+  /**
+   * The Excalidraw elements to be rendered as an image
+   */
+  files: BinaryFiles;
   /**
    * The height of the image to be rendered
    */
@@ -77,6 +81,7 @@ const removeStyleFromSvg_HACK = (svg: SVGElement) => {
  */
 export default function ExcalidrawImage({
   elements,
+  files,
   imageContainerRef,
   appState = null,
   rootClassName = null,
@@ -87,7 +92,7 @@ export default function ExcalidrawImage({
     const setContent = async () => {
       const svg: SVGElement = await exportToSvg({
         elements,
-        files: null,
+        files,
       });
       removeStyleFromSvg_HACK(svg);
 
@@ -98,7 +103,7 @@ export default function ExcalidrawImage({
       setSvg(svg);
     };
     setContent();
-  }, [elements, appState]);
+  }, [elements, files, appState]);
 
   return (
     <div

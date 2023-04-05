@@ -9,6 +9,7 @@
 import type {ExcalidrawElementFragment} from './ExcalidrawModal';
 import type {NodeKey} from 'lexical';
 
+import {BinaryFiles} from '@excalidraw/excalidraw/types/types';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {useLexicalNodeSelection} from '@lexical/react/useLexicalNodeSelection';
 import {mergeRegister} from '@lexical/utils';
@@ -123,15 +124,23 @@ export default function ExcalidrawComponent({
     });
   }, [editor, nodeKey]);
 
-  const setData = (newData: ReadonlyArray<ExcalidrawElementFragment>) => {
+  const setData = (
+    els: ReadonlyArray<ExcalidrawElementFragment>,
+    fls: BinaryFiles,
+  ) => {
     if (!editor.isEditable()) {
       return;
     }
     return editor.update(() => {
       const node = $getNodeByKey(nodeKey);
       if ($isExcalidrawNode(node)) {
-        if (newData.length > 0) {
-          node.setData(JSON.stringify(newData));
+        if (els.length > 0 || Object.keys(fls).length > 0) {
+          node.setData(
+            JSON.stringify({
+              elements: els,
+              files: fls,
+            }),
+          );
         } else {
           node.remove();
         }
@@ -150,17 +159,19 @@ export default function ExcalidrawComponent({
     }, 200);
   };
 
-  const elements = useMemo(() => JSON.parse(data), [data]);
+  const {elements = [], files = {}} = useMemo(() => JSON.parse(data), [data]);
+
   return (
     <>
       <ExcalidrawModal
         initialElements={elements}
+        initialFiles={files}
         isShown={isModalOpen}
         onDelete={deleteNode}
         onClose={() => setModalOpen(false)}
-        onSave={(newData) => {
+        onSave={(els, fls) => {
           editor.setEditable(true);
-          setData(newData);
+          setData(els, fls);
           setModalOpen(false);
         }}
         closeOnClickOutside={false}
@@ -173,6 +184,7 @@ export default function ExcalidrawComponent({
             imageContainerRef={imageContainerRef}
             className="image"
             elements={elements}
+            files={files}
           />
           {(isSelected || isResizing) && (
             <ImageResizer
