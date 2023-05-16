@@ -615,6 +615,12 @@ export function registerRichText(editor: LexicalEditor): () => void {
         if (!$isRangeSelection(selection)) {
           return false;
         }
+        if (format === 'superscript' && selection.hasFormat('subscript')) {
+          selection.toggleFormat('subscript');
+        }
+        if (format === 'subscript' && selection.hasFormat('superscript')) {
+          selection.toggleFormat('superscript');
+        }
         selection.formatText(format);
         return true;
       },
