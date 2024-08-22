@@ -46,6 +46,7 @@ import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
 import {INSERT_PAGE_BREAK} from '../PageBreakPlugin';
 import {InsertPollDialog} from '../PollPlugin';
 import {InsertTableDialog} from '../TablePlugin';
+import InsertTabsDialog from '../TabsPlugin/InsertTabsDialog';
 
 class ComponentPickerOption extends MenuOption {
   // What shows up in the editor
@@ -299,6 +300,14 @@ function getBaseOptions(editor: LexicalEditor, showModal: ShowModal) {
       onSelect: () =>
         showModal('Insert Columns Layout', (onClose) => (
           <InsertLayoutDialog activeEditor={editor} onClose={onClose} />
+        )),
+    }),
+    new ComponentPickerOption('Tabs', {
+      icon: <i className="icon columns" />,
+      keywords: ['tabs'],
+      onSelect: () =>
+        showModal('Insert Tabs', (onClose) => (
+          <InsertTabsDialog activeEditor={editor} onClose={onClose} />
         )),
     }),
     ...(['left', 'center', 'right', 'justify'] as const).map(
