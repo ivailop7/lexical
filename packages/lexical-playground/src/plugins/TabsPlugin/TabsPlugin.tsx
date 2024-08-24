@@ -16,7 +16,7 @@ import {
 } from '@lexical/utils';
 import {
   $createParagraphNode,
-  $getNodeByKey,
+  // $getNodeByKey,
   $getSelection,
   $isRangeSelection,
   COMMAND_PRIORITY_EDITOR,
@@ -30,15 +30,16 @@ import {
 import {useEffect} from 'react';
 
 import {
-  $createTabPanelNode,
-  $isTabPanelNode,
-  TabPanelNode,
-} from '../../nodes/TabsNodes/TabPanelNode';
-import {
   $createTabsContainerNode,
-  $isTabsContainerNode,
+  // $isTabsContainerNode,
   TabsContainerNode,
-} from '../../nodes/TabsNodes/TabsContainerNode';
+} from './TabsNodes/TabsContainerNode';
+import {
+  $createTabsPanelNode,
+  // $isTabsPanelNode,
+  TabsPanelNode,
+} from './TabsNodes/TabsPanelNode';
+import {$createTabsSelectorNode} from './TabsNodes/TabsSelectorNode';
 
 export const INSERT_TABS_COMMAND: LexicalCommand<string> =
   createCommand<string>();
@@ -51,9 +52,9 @@ export const UPDATE_TABS_COMMAND: LexicalCommand<{
 export function TabsPlugin(): null {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    if (!editor.hasNodes([TabsContainerNode, TabPanelNode])) {
+    if (!editor.hasNodes([TabsContainerNode, TabsPanelNode])) {
       throw new Error(
-        'TabsPlugin: TabsContainerNode, or TabPanelNode not registered on editor',
+        'TabsPlugin: TabsContainerNode, or TabsPanelNode not registered on editor',
       );
     }
 
@@ -130,12 +131,15 @@ export function TabsPlugin(): null {
         INSERT_TABS_COMMAND,
         (template) => {
           editor.update(() => {
-            const container = $createTabsContainerNode(template);
-            const itemsCount = getItemsCountFromTemplate(template);
-
-            for (let i = 0; i < itemsCount; i++) {
+            const container = $createTabsContainerNode();
+            // const itemsCount = getItemsCountFromTemplate(template);
+            const tabSelectorNode = $createTabsSelectorNode([]);
+            container.append(tabSelectorNode);
+            for (let i = 0; i < tabSelectorNode.getTabsList().length; i++) {
               container.append(
-                $createTabPanelNode(`tab_${i}`).append($createParagraphNode()),
+                $createTabsPanelNode(`tab_${i}`, i === 0).append(
+                  $createParagraphNode(),
+                ),
               );
             }
 
@@ -147,75 +151,71 @@ export function TabsPlugin(): null {
         },
         COMMAND_PRIORITY_EDITOR,
       ),
-      editor.registerCommand(
-        UPDATE_TABS_COMMAND,
-        ({template, nodeKey}) => {
-          editor.update(() => {
-            const container = $getNodeByKey<LexicalNode>(nodeKey);
+      // editor.registerCommand(
+      //   UPDATE_TABS_COMMAND,
+      //   ({template, nodeKey}) => {
+      //     editor.update(() => {
+      //       const container = $getNodeByKey<LexicalNode>(nodeKey);
 
-            if (!$isTabsContainerNode(container)) {
-              return;
-            }
+      //       if (!$isTabsContainerNode(container)) {
+      //         return;
+      //       }
 
-            const itemsCount = getItemsCountFromTemplate(template);
-            const prevItemsCount = getItemsCountFromTemplate(
-              container.getTemplateColumns(),
-            );
+      //       const itemsCount = getItemsCountFromTemplate(template);
+      //       const prevItemsCount = getItemsCountFromTemplate(
+      //         container.getTemplateColumns(),
+      //       );
 
-            // Add or remove extra columns if new template does not match existing one
-            if (itemsCount > prevItemsCount) {
-              for (let i = prevItemsCount; i < itemsCount; i++) {
-                container.append(
-                  $createTabPanelNode(`tab_${i}`).append(
-                    $createParagraphNode(),
-                  ),
-                );
-              }
-            } else if (itemsCount < prevItemsCount) {
-              for (let i = prevItemsCount - 1; i >= itemsCount; i--) {
-                const tabPanel = container.getChildAtIndex<LexicalNode>(i);
+      //       // Add or remove extra columns if new template does not match existing one
+      //       if (itemsCount > prevItemsCount) {
+      //         for (let i = prevItemsCount; i < itemsCount; i++) {
+      //           container.append(
+      //             $createTabsPanelNode(`tab_${i}`).append(
+      //               $createParagraphNode(),
+      //             ),
+      //           );
+      //         }
+      //       } else if (itemsCount < prevItemsCount) {
+      //         for (let i = prevItemsCount - 1; i >= itemsCount; i--) {
+      //           const tabPanel = container.getChildAtIndex<LexicalNode>(i);
 
-                if ($isTabPanelNode(tabPanel)) {
-                  tabPanel.remove();
-                }
-              }
-            }
+      //           if ($isTabsPanelNode(tabPanel)) {
+      //             tabPanel.remove();
+      //           }
+      //         }
+      //       }
 
-            container.setTemplateColumns(template);
-          });
+      //       container.setTemplateColumns(template);
+      //     });
 
-          return true;
-        },
-        COMMAND_PRIORITY_EDITOR,
-      ),
+      //     return true;
+      //   },
+      //   COMMAND_PRIORITY_EDITOR,
+      // ),
       // Structure enforcing transformers for each node type. In case nesting structure is not
       // "Container > Item" it'll unwrap nodes and convert it back
       // to regular content.
-      editor.registerNodeTransform(TabPanelNode, (node) => {
-        const parent = node.getParent<ElementNode>();
-        if (!$isTabsContainerNode(parent)) {
-          const children = node.getChildren<LexicalNode>();
-          for (const child of children) {
-            node.insertBefore(child);
-          }
-          node.remove();
-        }
-      }),
-      editor.registerNodeTransform(TabsContainerNode, (node) => {
-        const children = node.getChildren<LexicalNode>();
-        if (!children.every($isTabPanelNode)) {
-          for (const child of children) {
-            node.insertBefore(child);
-          }
-          node.remove();
-        }
-      }),
+      // editor.registerNodeTransform(TabsPanelNode, (node) => {
+      //   const parent = node.getParent<ElementNode>();
+      //   if (!$isTabsContainerNode(parent)) {
+      //     const children = node.getChildren<LexicalNode>();
+      //     for (const child of children) {
+      //       node.insertBefore(child);
+      //     }
+      //     node.remove();
+      //   }
+      // }),
+      // editor.registerNodeTransform(TabsContainerNode, (node) => {
+      //   const children = node.getChildren<LexicalNode>();
+      //   if (!children.every($isTabsPanelNode)) {
+      //     for (const child of children) {
+      //       node.insertBefore(child);
+      //     }
+      //     node.remove();
+      //   }
+      // }),
     );
   }, [editor]);
 
   return null;
-}
-
-function getItemsCountFromTemplate(template: string): number {
-  return template.trim().split(/\s+/).length;
 }

@@ -21,6 +21,9 @@ import {TableCellNode, TableNode, TableRowNode} from '@lexical/table';
 import {CollapsibleContainerNode} from '../plugins/CollapsiblePlugin/CollapsibleContainerNode';
 import {CollapsibleContentNode} from '../plugins/CollapsiblePlugin/CollapsibleContentNode';
 import {CollapsibleTitleNode} from '../plugins/CollapsiblePlugin/CollapsibleTitleNode';
+import {TabsContainerNode} from '../plugins/TabsPlugin/TabsNodes/TabsContainerNode';
+import {TabsPanelNode} from '../plugins/TabsPlugin/TabsNodes/TabsPanelNode';
+import {TabsSelectorNode} from '../plugins/TabsPlugin/TabsNodes/TabsSelectorNode';
 import {AutocompleteNode} from './AutocompleteNode';
 import {EmojiNode} from './EmojiNode';
 import {EquationNode} from './EquationNode';
@@ -35,8 +38,6 @@ import {MentionNode} from './MentionNode';
 import {PageBreakNode} from './PageBreakNode';
 import {PollNode} from './PollNode';
 import {StickyNode} from './StickyNode';
-import {TabPanelNode} from './TabsNodes/TabPanelNode';
-import {TabsContainerNode} from './TabsNodes/TabsContainerNode';
 import {TweetNode} from './TweetNode';
 import {YouTubeNode} from './YouTubeNode';
 
@@ -76,7 +77,8 @@ const PlaygroundNodes: Array<Klass<LexicalNode>> = [
   LayoutContainerNode,
   LayoutItemNode,
   TabsContainerNode,
-  TabPanelNode,
+  TabsSelectorNode,
+  TabsPanelNode,
 ];
 
 export default PlaygroundNodes;
