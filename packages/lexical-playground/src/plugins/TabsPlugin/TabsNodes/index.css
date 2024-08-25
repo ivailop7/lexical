@@ -1,0 +1,8 @@
+.Tabs__container {
+}
+.Tabs__selector {
+}
+.Tabs__panel {
+  border: 1px dashed #ddd;
+  padding: 8px 16px;
+}

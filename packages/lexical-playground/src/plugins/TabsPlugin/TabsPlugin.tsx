@@ -31,7 +31,7 @@ import {useEffect} from 'react';
 
 import {
   $createTabsContainerNode,
-  // $isTabsContainerNode,
+  $isTabsContainerNode,
   TabsContainerNode,
 } from './TabsNodes/TabsContainerNode';
 import {
@@ -99,7 +99,7 @@ export function TabsPlugin(): null {
     };
 
     return mergeRegister(
-      // When layout is the last child pressing down/right arrow will insert paragraph
+      // When tabs is the last child pressing down/right arrow will insert paragraph
       // below it to allow adding more content. It's similar what $insertBlockNode
       // (mainly for decorators), except it'll always be possible to continue adding
       // new content even if trailing paragraph is accidentally deleted
@@ -113,7 +113,7 @@ export function TabsPlugin(): null {
         () => $onEscape(false),
         COMMAND_PRIORITY_LOW,
       ),
-      // When layout is the first child pressing up/left arrow will insert paragraph
+      // When tabs is the first child pressing up/left arrow will insert paragraph
       // above it to allow adding more content. It's similar what $insertBlockNode
       // (mainly for decorators), except it'll always be possible to continue adding
       // new content even if leading paragraph is accidentally deleted
@@ -131,17 +131,17 @@ export function TabsPlugin(): null {
         INSERT_TABS_COMMAND,
         (template) => {
           editor.update(() => {
-            const container = $createTabsContainerNode();
-            // const itemsCount = getItemsCountFromTemplate(template);
-            const tabSelectorNode = $createTabsSelectorNode([]);
+            const list = ['London', 'Paris', 'NY'];
+            const container = $createTabsContainerNode(list);
+            const tabSelectorNode = $createTabsSelectorNode(list);
             container.append(tabSelectorNode);
-            for (let i = 0; i < tabSelectorNode.getTabsList().length; i++) {
+            tabSelectorNode.getTabsList().forEach((tab, idx) => {
               container.append(
-                $createTabsPanelNode(`tab_${i}`, i === 0).append(
+                $createTabsPanelNode(tab, idx === 0).append(
                   $createParagraphNode(),
                 ),
               );
-            }
+            });
 
             $insertNodeToNearestRoot(container);
             container.selectStart();

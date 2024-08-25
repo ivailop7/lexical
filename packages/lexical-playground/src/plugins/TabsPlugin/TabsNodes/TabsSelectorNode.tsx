@@ -7,6 +7,7 @@
  */
 
 import {
+  $createParagraphNode,
   DecoratorNode,
   DOMConversionMap,
   DOMConversionOutput,
@@ -18,6 +19,9 @@ import {
 } from 'lexical';
 import * as React from 'react';
 import {Suspense} from 'react';
+
+import {TabsContainerNode} from './TabsContainerNode';
+import {$createTabsPanelNode, $isTabsPanelNode} from './TabsPanelNode';
 
 export type Options = ReadonlyArray<Option>;
 
@@ -34,6 +38,7 @@ const TabsSelectorComponent = React.lazy(
 export type SerializedTabsSelectorNode = Spread<
   {
     tabsList: string[];
+    selectedTab: string;
   },
   SerializedLexicalNode
 >;
@@ -41,44 +46,64 @@ export type SerializedTabsSelectorNode = Spread<
 function $convertTabsSelectorElement(
   domNode: HTMLElement,
 ): DOMConversionOutput | null {
-  const hasTabsSelectorAttribute = domNode.hasAttribute(
-    'data-lexical-tabs-selector',
-  );
-  if (hasTabsSelectorAttribute) {
-    const node = $createTabsSelectorNode([]); //parse list from dom value
-    return {node};
-  }
-  return null;
+  const tabsListString = domNode.getAttribute('data-lexical-tabs-list') || '';
+  const tabsList = tabsListString?.length > 0 ? tabsListString.split(';') : [];
+  const selectedTab = domNode.getAttribute('data-lexical-tabs-selected') || '';
+
+  return {node: $createTabsSelectorNode(tabsList, selectedTab)};
 }
 
 export class TabsSelectorNode extends DecoratorNode<JSX.Element> {
   __tabsList: string[];
+  __selectedTab: string;
 
   static getType(): string {
     return 'tabs-selector';
   }
 
   static clone(node: TabsSelectorNode): TabsSelectorNode {
-    return new TabsSelectorNode(node.__tabsList, node.__key);
+    return new TabsSelectorNode(
+      node.__tabsList,
+      node.__selectedTab,
+      node.__key,
+    );
+  }
+
+  constructor(tabsList: string[], selectedTab?: string, key?: NodeKey) {
+    super(key);
+    this.__tabsList = tabsList.length > 0 ? tabsList : ['Tab 1', 'Tab 2'];
+    if (selectedTab) {
+      const selectedTabIsInList = tabsList.some((r) => r === selectedTab);
+      if (selectedTabIsInList) {
+        this.__selectedTab = selectedTab;
+      } else {
+        this.__selectedTab = tabsList[0]; // default to first tab
+      }
+    } else {
+      this.__selectedTab = tabsList[0];
+    }
+  }
+
+  createDOM(): HTMLElement {
+    const element = document.createElement('div');
+    element.classList.add('Tabs__selector');
+    element.style.display = 'inline-block';
+    return element;
   }
 
   static importJSON(
     serializedNode: SerializedTabsSelectorNode,
   ): TabsSelectorNode {
-    // serializedNode.options.forEach(node.addOption);
-    const node = $createTabsSelectorNode(serializedNode.tabsList);
-    return node;
-  }
-
-  constructor(tabsList: string[], key?: NodeKey) {
-    super(key);
-    this.__tabsList =
-      tabsList.length > 0 ? tabsList : ['London', 'Paris', 'New York'];
+    return $createTabsSelectorNode(
+      serializedNode.tabsList,
+      serializedNode.selectedTab,
+    );
   }
 
   exportJSON(): SerializedTabsSelectorNode {
     return {
-      tabsList: this.__tabsList,
+      selectedTab: this.getSelectedTab(),
+      tabsList: this.getTabsList(),
       type: 'tabs-selector',
       version: 1,
     };
@@ -86,7 +111,7 @@ export class TabsSelectorNode extends DecoratorNode<JSX.Element> {
 
   static importDOM(): DOMConversionMap | null {
     return {
-      span: (domNode: HTMLElement) => {
+      div: (domNode: HTMLElement) => {
         if (!domNode.hasAttribute('data-lexical-tabs-selector')) {
           return null;
         }
@@ -99,23 +124,22 @@ export class TabsSelectorNode extends DecoratorNode<JSX.Element> {
   }
 
   exportDOM(): DOMExportOutput {
-    const element = document.createElement('span');
-    element.setAttribute('data-lexical-tabs-selector', this.__question);
+    const element = document.createElement('div');
+    element.classList.add('Tabs__selector');
+    element.setAttribute('data-lexical-tabs-selector', 'true');
     element.setAttribute(
-      'data-lexical-poll-options',
-      JSON.stringify(this.__options),
+      'data-lexical-tabs-list',
+      this.getTabsList().join(';'),
     );
+    element.setAttribute('data-lexical-tabs-selected', this.getSelectedTab());
     return {element};
   }
 
-  createDOM(): HTMLElement {
-    const elem = document.createElement('span');
-    elem.style.display = 'inline-block';
-    return elem;
-  }
-
-  updateDOM(): false {
-    return false;
+  updateDOM(prevNode: TabsSelectorNode): boolean {
+    return (
+      prevNode.__tabsList !== this.__tabsList ||
+      prevNode.__selectedTab !== this.__selectedTab
+    );
   }
 
   getTabsList(): string[] {
@@ -127,20 +151,69 @@ export class TabsSelectorNode extends DecoratorNode<JSX.Element> {
     const tabsList = Array.from(self.__tabsList);
     tabsList.push(name);
     self.__tabsList = tabsList;
+
+    const container = this.getParentOrThrow<TabsContainerNode>();
+    container.append(
+      $createTabsPanelNode(name, false).append($createParagraphNode()),
+    );
   }
 
   deleteTab(name: string): void {
     const self = this.getWritable();
+    if (self.__tabsList.length <= 1) {
+      console.error('Cannot remove all tabs from a tabs panel');
+      return;
+    }
     const tabsList = Array.from(self.__tabsList);
     const index = tabsList.indexOf(name);
     tabsList.splice(index, 1);
     self.__tabsList = tabsList;
+
+    const container = this.getParentOrThrow<TabsContainerNode>();
+    const panel = container
+      .getChildren()
+      .find((node) => $isTabsPanelNode(node) && node.getName() === name);
+
+    if (panel) {
+      // Handle the case if the active tab is delete
+      if (this.getSelectedTab() === name) {
+        const prevPanel = panel.getPreviousSibling();
+        if ($isTabsPanelNode(prevPanel)) {
+          this.selectTab(prevPanel.getName());
+        } else {
+          const nextPanel = panel.getNextSibling();
+          if ($isTabsPanelNode(nextPanel)) {
+            this.selectTab(nextPanel.getName());
+          }
+        }
+      }
+      panel?.remove();
+    }
+  }
+
+  selectTab(name: string): void {
+    this.getWritable().__selectedTab = name;
+    const container = this.getParentOrThrow<TabsContainerNode>();
+    const tabPanelNodes = container
+      .getChildren()
+      .filter((node) => $isTabsPanelNode(node));
+    tabPanelNodes.forEach((node) => {
+      node.setVisibility(node.getName() === name);
+      if (node.getName() === name) {
+        node.selectEnd();
+      }
+    });
+  }
+
+  getSelectedTab(): string {
+    return this.getLatest().__selectedTab;
   }
 
   decorate(): JSX.Element {
     return (
       <Suspense fallback={null}>
         <TabsSelectorComponent
+          selectedTab={this.__selectedTab}
           tabsList={this.__tabsList}
           nodeKey={this.__key}
         />
@@ -149,8 +222,11 @@ export class TabsSelectorNode extends DecoratorNode<JSX.Element> {
   }
 }
 
-export function $createTabsSelectorNode(tabsList: string[]): TabsSelectorNode {
-  return new TabsSelectorNode(tabsList);
+export function $createTabsSelectorNode(
+  tabsList: string[],
+  selectedTab?: string,
+): TabsSelectorNode {
+  return new TabsSelectorNode(tabsList, selectedTab);
 }
 
 export function $isTabsSelectorNode(

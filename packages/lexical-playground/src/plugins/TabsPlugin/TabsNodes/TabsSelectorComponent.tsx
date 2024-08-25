@@ -24,100 +24,12 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import Button from '../../../ui/Button';
 import {$isTabsSelectorNode, TabsSelectorNode} from './TabsSelectorNode';
 
-// function PollOptionComponent({
-//   option,
-//   index,
-//   options,
-//   totalVotes,
-//   withTabsSelectorNode,
-// }: {
-//   index: number;
-//   option: Option;
-//   options: Options;
-//   totalVotes: number;
-//   withTabsSelectorNode: (
-//     cb: (pollNode: PollNode) => void,
-//     onSelect?: () => void,
-//   ) => void;
-// }): JSX.Element {
-//   const {clientID} = useCollaborationContext();
-//   const checkboxRef = useRef(null);
-//   const votesArray = option.votes;
-//   const checkedIndex = votesArray.indexOf(clientID);
-//   const checked = checkedIndex !== -1;
-//   const votes = votesArray.length;
-//   const text = option.text;
-
-//   return (
-//     <div className="PollNode__optionContainer">
-//       <div
-//         className={joinClasses(
-//           'PollNode__optionCheckboxWrapper',
-//           checked && 'PollNode__optionCheckboxChecked',
-//         )}>
-//         <input
-//           ref={checkboxRef}
-//           className="PollNode__optionCheckbox"
-//           type="checkbox"
-//           onChange={(e) => {
-//             withTabsSelectorNode((node) => {
-//               node.toggleVote(option, clientID);
-//             });
-//           }}
-//           checked={checked}
-//         />
-//       </div>
-//       <div className="PollNode__optionInputWrapper">
-//         <div
-//           className="PollNode__optionInputVotes"
-//           style={{width: `${votes === 0 ? 0 : (votes / totalVotes) * 100}%`}}
-//         />
-//         <span className="PollNode__optionInputVotesCount">
-//           {votes > 0 && (votes === 1 ? '1 vote' : `${votes} votes`)}
-//         </span>
-//         <input
-//           className="PollNode__optionInput"
-//           type="text"
-//           value={text}
-//           onChange={(e) => {
-//             const target = e.target;
-//             const value = target.value;
-//             const selectionStart = target.selectionStart;
-//             const selectionEnd = target.selectionEnd;
-//             withTabsSelectorNode(
-//               (node) => {
-//                 node.setOptionText(option, value);
-//               },
-//               () => {
-//                 target.selectionStart = selectionStart;
-//                 target.selectionEnd = selectionEnd;
-//               },
-//             );
-//           }}
-//           placeholder={`Option ${index + 1}`}
-//         />
-//       </div>
-//       <button
-//         disabled={options.length < 3}
-//         className={joinClasses(
-//           'PollNode__optionDelete',
-//           options.length < 3 && 'PollNode__optionDeleteDisabled',
-//         )}
-//         aria-label="Remove"
-//         onClick={() => {
-//           withTabsSelectorNode((node) => {
-//             node.deleteOption(option);
-//           });
-//         }}
-//       />
-//     </div>
-//   );
-// }
-
 export default function TabsSelectorComponent({
+  selectedTab,
   tabsList,
   nodeKey,
 }: {
+  selectedTab: string;
   tabsList: string[];
   nodeKey: NodeKey;
 }): JSX.Element {
@@ -203,23 +115,31 @@ export default function TabsSelectorComponent({
     });
   };
 
-  const changeTab = (tabName) => {
-    // get TabsPanelName by name or key?
-    // setVisibility() for the current key and the next key
+  const deleteTab = (name: string) => {
+    withTabsSelectorNode((node) => {
+      node.deleteTab(name);
+    });
   };
-  const isFocused = $isNodeSelection(selection) && isSelected;
 
+  const selectTab = (tabName: string) => {
+    withTabsSelectorNode((node) => {
+      node.selectTab(tabName);
+    });
+  };
+
+  const isFocused = $isNodeSelection(selection) && isSelected;
   return (
     <div className={`${isFocused ? 'focused' : ''}`} ref={ref}>
       <div className="tabs">
         {(tabsList || []).map((tabName) => {
           return (
-            <Button key={tabName} onClick={() => changeTab(tabName)}>
-              {tabName}
+            <Button key={tabName} onClick={() => selectTab(tabName)}>
+              {selectedTab === tabName ? `>${tabName}<` : tabName}
             </Button>
           );
         })}
         <Button onClick={addTab}>+</Button>
+        <Button onClick={() => deleteTab(tabsList[1])}>Del 2nd tab</Button>
       </div>
     </div>
   );

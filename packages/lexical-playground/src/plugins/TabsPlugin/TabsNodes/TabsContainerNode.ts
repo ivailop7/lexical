@@ -19,28 +19,25 @@ import {ElementNode} from 'lexical';
 function $convertTabsContainerElement(
   domNode: HTMLElement,
 ): DOMConversionOutput | null {
-  const node = $createTabsContainerNode();
-  return {node};
+  return {node: $createTabsContainerNode()};
 }
 
 export class TabsContainerNode extends ElementNode {
-  __mainTabsList: string[];
-
-  constructor(mainTabsList: string[], key?: NodeKey) {
-    super(key);
-    this.__mainTabsList = mainTabsList;
-  }
-
   static getType(): string {
     return 'tabs-container';
   }
 
+  constructor(key?: NodeKey) {
+    super(key);
+  }
+
   static clone(node: TabsContainerNode): TabsContainerNode {
-    return new TabsContainerNode(node.__mainTabsList, node.__key);
+    return new TabsContainerNode(node.__key);
   }
 
   createDOM(): HTMLElement {
     const element = document.createElement('div');
+    element.classList.add('Tabs__container');
     element.setAttribute('data-lexical-tabs-container', 'true');
     return element;
   }
@@ -63,21 +60,9 @@ export class TabsContainerNode extends ElementNode {
     };
   }
 
-  static importJSON(json: SerializedElementNode): TabsContainerNode {
+  static importJSON(serializedNode: SerializedElementNode): TabsContainerNode {
     return $createTabsContainerNode();
   }
-
-  // isShadowRoot(): boolean {
-  //   return true;
-  // }
-
-  // canBeEmpty(): boolean {
-  //   return false;
-  // }
-
-  // isInline(): boolean {
-  //   return false;
-  // }
 
   exportJSON(): SerializedElementNode {
     return {

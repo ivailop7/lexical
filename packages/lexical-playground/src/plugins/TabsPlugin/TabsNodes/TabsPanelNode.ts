@@ -8,14 +8,14 @@
 
 import type {
   DOMConversionMap,
-  EditorConfig,
   LexicalNode,
   NodeKey,
   SerializedElementNode,
   Spread,
 } from 'lexical';
 
-import {addClassNamesToElement} from '@lexical/utils';
+import './index.css';
+
 import {ElementNode} from 'lexical';
 
 export type SerializedTabsPanelNode = Spread<
@@ -44,21 +44,19 @@ export class TabsPanelNode extends ElementNode {
     this.__visible = visible;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
-    const dom = document.createElement('div');
-    if (typeof config.theme.layoutItem === 'string') {
-      addClassNamesToElement(dom, config.theme.layoutItem); //change later
-    }
+  createDOM(): HTMLElement {
+    const element = document.createElement('div');
+    element.classList.add('Tabs__panel');
     if (!this.__visible) {
-      dom.setAttribute('style', 'display:none');
+      element.setAttribute('style', 'display:none');
     } else {
-      dom.setAttribute('style', '');
+      element.removeAttribute('style');
     }
-    return dom;
+    return element;
   }
 
-  updateDOM(): boolean {
-    return false;
+  updateDOM(prevNode: TabsPanelNode): boolean {
+    return prevNode.__visible !== this.__visible;
   }
 
   static importDOM(): DOMConversionMap | null {
@@ -81,6 +79,14 @@ export class TabsPanelNode extends ElementNode {
       version: 1,
       visible: this.__visible,
     };
+  }
+
+  getName(): string {
+    return this.getLatest().__name;
+  }
+
+  setName(name: string): void {
+    this.getWritable().__name = name;
   }
 
   getVisibility(): boolean {
