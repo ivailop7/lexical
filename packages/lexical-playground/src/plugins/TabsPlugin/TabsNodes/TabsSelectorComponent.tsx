@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+import './index.css';
+
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {useLexicalNodeSelection} from '@lexical/react/useLexicalNodeSelection';
 import {mergeRegister} from '@lexical/utils';
@@ -21,7 +23,6 @@ import {
 } from 'lexical';
 import {useCallback, useEffect, useRef, useState} from 'react';
 
-import Button from '../../../ui/Button';
 import {$isTabsSelectorNode, TabsSelectorNode} from './TabsSelectorNode';
 
 export default function TabsSelectorComponent({
@@ -133,13 +134,20 @@ export default function TabsSelectorComponent({
       <div className="tabs">
         {(tabsList || []).map((tabName) => {
           return (
-            <Button key={tabName} onClick={() => selectTab(tabName)}>
-              {selectedTab === tabName ? `>${tabName}<` : tabName}
-            </Button>
+            <div
+              className={`tab ${selectedTab === tabName && 'active'}`}
+              key={tabName}
+              onClick={() => selectTab(tabName)}>
+              <div className={'label'}>{tabName}</div>
+            </div>
           );
         })}
-        <Button onClick={addTab}>+</Button>
-        <Button onClick={() => deleteTab(tabsList[1])}>Del 2nd tab</Button>
+        <div className={'tab'} onClick={addTab}>
+          <div className={'label'}>+</div>
+        </div>
+        <div className={'tab'} onClick={() => deleteTab(tabsList[1])}>
+          <div className={'label'}>Del 2nd tab</div>
+        </div>
       </div>
     </div>
   );
